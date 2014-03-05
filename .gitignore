@@ -6,6 +6,7 @@
 
 # Ignore all my bank statements
 /doc/*.pdf
+/doc/*.txt
 
 # Local database setup
 /config/database.yml
