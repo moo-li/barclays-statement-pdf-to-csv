@@ -2,7 +2,9 @@ desc 'Parse all PDFs in doc folder'
 task :parse => :environment do
   DATE_WIDTH      = 7
   NARRATIVE_WIDTH = 61
-  VALUE_WIDTH     = 17
+  PAYMENT_WIDTH   = 21
+  RECEIPT_WIDTH   = 17
+  BALANCE_WIDTH   = 17
 
   csv = {} # We'll build one CSV file for each account
 
@@ -77,20 +79,36 @@ task :parse => :environment do
         end
 
         # Narrative
-        leftmost  += DATE_WIDTH
-        line_narrative = line[leftmost,NARRATIVE_WIDTH].strip if line.length > leftmost
+        leftmost += DATE_WIDTH
+
+        if line.length > leftmost
+          line_narrative_raw = line[leftmost, NARRATIVE_WIDTH]
+          line_narrative = line_narrative_raw.strip
+        end
 
         # Payments
-        leftmost  += NARRATIVE_WIDTH
-        payment   = line[leftmost, VALUE_WIDTH].gsub(',', '').to_f if line.length > leftmost
+        leftmost += NARRATIVE_WIDTH
+
+        if line.length > leftmost
+          payment_raw = line[leftmost, PAYMENT_WIDTH]
+          payment = payment_raw.gsub(',', '').to_f
+        end
 
         # Receipts
-        leftmost  += VALUE_WIDTH
-        receipt   = line[leftmost, VALUE_WIDTH].gsub(',', '').to_f if line.length > leftmost
+        leftmost += PAYMENT_WIDTH
+
+        if line.length > leftmost
+          receipt_raw = line[leftmost, RECEIPT_WIDTH]
+          receipt = receipt_raw.gsub(',', '').to_f
+        end
 
         # Balance
-        leftmost  += VALUE_WIDTH
-        balance   = line[-VALUE_WIDTH, VALUE_WIDTH].gsub(',', '').to_f if line.length > leftmost
+        leftmost += RECEIPT_WIDTH
+
+        if line.length > leftmost
+          balance_raw = line[-BALANCE_WIDTH, BALANCE_WIDTH]
+          balance = balance_raw.gsub(',', '').to_f
+        end
 
         # Are we amongst the actual statement detail lines?
         if [
@@ -109,7 +127,14 @@ task :parse => :environment do
 
           if balance
             unless (balance - computed_balance).abs < 0.001
-              raise "Balance fail: statement says #{balance}, transactions add up to #{computed_balance} (raw: [#{line[leftmost, VALUE_WIDTH]}])"
+              File.open(text_file_name, 'w') { |file| file.write(text) }
+
+              puts  "line_narrative: [#{line_narrative_raw}]"
+              puts  "payment: [#{payment_raw}]"
+              puts  "receipt: [#{receipt_raw}]"
+              puts  "balance: [#{balance_raw}]"
+
+              raise "Balance fail: statement says #{balance}, transactions add up to #{computed_balance}"
             end
           end
 
@@ -117,7 +142,7 @@ task :parse => :environment do
           if payment || receipt
             amount = (payment || 0.0) - (receipt || 0.0)
 
-            puts "#{page.number}\t#{current_date}\t#{amount}\t#{narrative.join(' ').strip}"
+            puts "#{page.number}\t#{current_date}\t#{amount}\t#{narrative.join(' ').strip}\t(#{payment},#{receipt},#{balance})"
             csv[csv_file_name] += "#{current_date},#{amount},\"#{narrative.join(' ').strip}\"\n"
             narrative = []
           end
