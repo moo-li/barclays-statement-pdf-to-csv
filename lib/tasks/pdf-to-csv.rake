@@ -141,9 +141,9 @@ task :parse => :environment do
 
           # Transaction
           if payment || receipt
-            amount = (payment || 0.0) - (receipt || 0.0)
+            amount = (receipt || 0.0) - (payment || 0.0)
 
-            puts "#{page.number}\t#{current_date}\t#{amount}\t#{narrative.join(' ').strip}\t(#{payment},#{receipt},#{balance})"
+            puts "#{page.number}\t#{current_date}\t#{amount}\t#{narrative.join(' ').strip}" # \t[#{payment}|#{receipt}|#{balance}]"
             csv[csv_file_name] += "#{current_date},#{amount},\"#{narrative.join(' ').strip}\"\n"
             narrative = []
           end
