@@ -122,6 +122,7 @@ task :parse => :environment do
           narrative << line_narrative
 
           # Check balance
+          computed_balance  = balance if balance && !computed_balance
           computed_balance += receipt if receipt
           computed_balance -= payment if payment
 
