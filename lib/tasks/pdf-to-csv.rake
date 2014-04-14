@@ -65,6 +65,8 @@ task :parse => :environment do
         line_month  = line_month.downcase if line_month
 
         if line_date =~ /\A\d{1,2} \w{3}\z/
+          # TODO: first transaction in new year might not be in January at all
+
           # Maybe increment the year if this is a January line?
           if line_month == 'jan'
             if increment_year_in_jan
