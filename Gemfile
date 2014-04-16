@@ -7,7 +7,7 @@ gem 'rails', '4.0.3'
 
 gem 'pdf-reader'
 
-gem 'pg', '>= 0.14.1'
+gem 'sqlite3'
 
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 4.0.0'
