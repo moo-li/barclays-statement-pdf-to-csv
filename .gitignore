@@ -5,6 +5,7 @@
 #   git config --global core.excludesfile '~/.gitignore_global'
 
 # Ignore all my bank statements
+/doc/*
 /doc/*.pdf
 /doc/*.txt
 /doc/*.csv

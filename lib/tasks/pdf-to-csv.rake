@@ -1,10 +1,11 @@
 desc 'Parse all PDFs in doc folder'
 task :parse => :environment do
   DATE_WIDTH      = 7
-  NARRATIVE_WIDTH = 61
+  NARRATIVE_WIDTH = 63
   PAYMENT_WIDTH   = 21
   RECEIPT_WIDTH   = 17
   BALANCE_WIDTH   = 17
+  MONTHS          = %w{jan feb mar apr may jun jul aug sep oct nov dec}
 
   csv = {} # We'll build one CSV file for each account
 
@@ -15,6 +16,7 @@ task :parse => :environment do
     reader            = PDF::Reader.new(pdf_file)
     current_year      = nil # define it outside the block
     computed_balance  = nil # define it outside the block
+
 
     reader.pages.each do |page|
       lines = page.text.lines.map(&:chomp)
@@ -57,12 +59,16 @@ task :parse => :environment do
 
       lines.each do |line|
         # Date
-        leftmost  = 0
-        line_date = line[leftmost, DATE_WIDTH].strip
+        leftmost    = 0
+        line_date   = line[leftmost, DATE_WIDTH].strip
+        line_month  = line_date.split[1]
+        line_month  = line_month.downcase if line_month
 
         if line_date =~ /\A\d{1,2} \w{3}\z/
+          # TODO: first transaction in new year might not be in January at all
+
           # Maybe increment the year if this is a January line?
-          if line_date.split[1] == 'Jan'
+          if line_month == 'jan'
             if increment_year_in_jan
               current_year += 1
 
@@ -72,7 +78,8 @@ task :parse => :environment do
           else
             # As soon as we see a non-January line we can get ready to
             # increment the year when we next see a January one
-            increment_year_in_jan = true
+            # (has to be a real date though)
+            increment_year_in_jan = true if MONTHS.include? line_month
           end
 
           current_date = "#{line_date} #{current_year}".to_date
@@ -144,7 +151,7 @@ task :parse => :environment do
             amount = (receipt || 0.0) - (payment || 0.0)
 
             puts "#{page.number}\t#{current_date}\t#{amount}\t#{narrative.join(' ').strip}" # \t[#{payment}|#{receipt}|#{balance}]"
-            csv[csv_file_name] += "#{current_date},#{amount},\"#{narrative.join(' ').strip}\"\n"
+            csv[csv_file_name] += "#{current_date},#{amount},\"#{narrative.join(' ').strip}\",#{pdf_file}\n"
             narrative = []
           end
         end
