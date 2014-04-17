@@ -1,6 +1,6 @@
 require 'csv'
 desc 'Parse all PDFs in doc folder'
-task :parse => :environment do
+task :parse_new => :environment do
   DATE_WIDTH      = 13  
   NARRATIVE_WIDTH = 34
   PAYMENT_WIDTH   = 14
